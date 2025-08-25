@@ -398,7 +398,7 @@
             document.getElementById('bestScore').textContent = gameState.bestScore;
             
             // Generate referral link
-            const referralLink = `https://t.me/your_bot?start=${gameState.userId}`;
+            const referralLink = `https://t.me/Coin2048_game_bot?start=${gameState.userId}`;
             document.getElementById('referralLink').value = referralLink;
             
             // Check if admin
@@ -585,16 +585,19 @@
 
         // Tasks
         function loadTasks() {
+            // Get completed tasks from localStorage
+            const completedTasks = JSON.parse(localStorage.getItem('completedTasks') || '[]');
+            
             const dailyTasks = [
-                {title: "5 o'yin o'ynang", reward: 100, completed: false},
-                {title: "1000 ball to'plang", reward: 200, completed: false},
-                {title: "128 raqamiga yeting", reward: 300, completed: false}
+                {title: "5 o'yin o'ynang", reward: 100, completed: completedTasks.includes("5 o'yin o'ynang"), type: "game"},
+                {title: "1000 ball to'plang", reward: 200, completed: completedTasks.includes("1000 ball to'plang"), type: "score"},
+                {title: "128 raqamiga yeting", reward: 300, completed: completedTasks.includes("128 raqamiga yeting"), type: "tile"}
             ];
             
             const socialTasks = [
-                {title: "Telegram kanalga obuna bo'ling", reward: 500, completed: false},
-                {title: "YouTube kanalga obuna bo'ling", reward: 500, completed: false},
-                {title: "Do'stingizni taklif qiling", reward: 1000, completed: false}
+                {title: "Telegram kanalga obuna bo'ling", reward: 500, completed: completedTasks.includes("Telegram kanalga obuna bo'ling"), type: "telegram", link: "https://t.me/your_channel"},
+                {title: "YouTube kanalga obuna bo'ling", reward: 500, completed: completedTasks.includes("YouTube kanalga obuna bo'ling"), type: "youtube", link: "https://youtube.com/@your_channel"},
+                {title: "Do'stingizni taklif qiling", reward: 1000, completed: completedTasks.includes("Do'stingizni taklif qiling"), type: "referral"}
             ];
             
             renderTasks('dailyTasks', dailyTasks);
@@ -610,24 +613,107 @@
                             <h4 class="font-semibold text-white">${task.title}</h4>
                             <p class="text-sm text-purple-200">${task.reward} tanga 💰</p>
                         </div>
-                        <button class="px-4 py-2 rounded-xl text-sm font-semibold shadow-lg transition-all duration-300 ${task.completed ? 'bg-green-500 text-white' : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:scale-105'}" 
-                                onclick="completeTask('${task.title}', ${task.reward})" 
-                                ${task.completed ? 'disabled' : ''}>
-                            ${task.completed ? '✅ Bajarildi' : '🎯 Bajarish'}
-                        </button>
+                        <div class="flex space-x-2">
+                            ${!task.completed && task.link ? `
+                                <button class="px-3 py-2 rounded-xl text-sm font-semibold shadow-lg transition-all duration-300 bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:scale-105" 
+                                        onclick="openTaskLink('${task.link}')">
+                                    🎯 Bajarish
+                                </button>
+                                <button class="px-3 py-2 rounded-xl text-sm font-semibold shadow-lg transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:scale-105" 
+                                        onclick="checkTaskCompletion('${task.title}', ${task.reward}, '${task.type}')">
+                                    ✅ Tekshirish
+                                </button>
+                            ` : !task.completed ? `
+                                <button class="px-4 py-2 rounded-xl text-sm font-semibold shadow-lg transition-all duration-300 bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:scale-105" 
+                                        onclick="completeTask('${task.title}', ${task.reward})">
+                                    🎯 Bajarish
+                                </button>
+                            ` : `
+                                <button class="px-4 py-2 rounded-xl text-sm font-semibold shadow-lg bg-green-500 text-white" disabled>
+                                    ✅ Bajarildi
+                                </button>
+                            `}
+                        </div>
                     </div>
                 </div>
             `).join('');
         }
 
+        function openTaskLink(link) {
+            if (tg && tg.openLink) {
+                tg.openLink(link);
+            } else {
+                window.open(link, '_blank');
+            }
+        }
+
+        function checkTaskCompletion(title, reward, type) {
+            // For demo purposes, we'll simulate task verification
+            // In a real app, you'd verify with your backend
+            
+            let canComplete = false;
+            let message = "";
+            
+            switch(type) {
+                case 'telegram':
+                    // Simulate checking if user joined Telegram channel
+                    canComplete = confirm("Telegram kanalga obuna bo'ldingizmi? (Ha/Yo'q)");
+                    message = canComplete ? "Telegram kanalga obuna bo'lganingiz tasdiqlandi!" : "Iltimos, avval kanalga obuna bo'ling!";
+                    break;
+                    
+                case 'youtube':
+                    // Simulate checking if user subscribed to YouTube channel
+                    canComplete = confirm("YouTube kanalga obuna bo'ldingizmi? (Ha/Yo'q)");
+                    message = canComplete ? "YouTube kanalga obuna bo'lganingiz tasdiqlandi!" : "Iltimos, avval kanalga obuna bo'ling!";
+                    break;
+                    
+                default:
+                    canComplete = true;
+                    break;
+            }
+            
+            if (canComplete) {
+                completeTask(title, reward);
+            } else {
+                if (tg && tg.showAlert) {
+                    tg.showAlert(message);
+                } else {
+                    alert(message);
+                }
+            }
+        }
+
         function completeTask(title, reward) {
+            // Add coins with animation
             gameState.coins += reward;
+            
+            // Mark task as completed in localStorage
+            let completedTasks = JSON.parse(localStorage.getItem('completedTasks') || '[]');
+            if (!completedTasks.includes(title)) {
+                completedTasks.push(title);
+                localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
+            }
+            
             updateDisplay();
             saveGame();
-            loadTasks();
+            
+            // Animate coins
+            document.getElementById('coinBalance').classList.add('coin-animation');
+            setTimeout(() => {
+                document.getElementById('coinBalance').classList.remove('coin-animation');
+            }, 600);
             
             // Show success message
-            alert(`🎉 Vazifa bajarildi! ${reward} tanga olindi.`);
+            if (tg && tg.showAlert) {
+                tg.showAlert(`🎉 Vazifa bajarildi! ${reward} tanga olindi.`);
+            } else {
+                alert(`🎉 Vazifa bajarildi! ${reward} tanga olindi.`);
+            }
+            
+            // Reload tasks to show updated state
+            setTimeout(() => {
+                loadTasks();
+            }, 100);
         }
 
         // Leaderboard
@@ -756,5 +842,5 @@
             });
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9748ea3fa2255318',t:'MTc1NjEwMjEwOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9748fd973211ad45',t:'MTc1NjEwMjkwMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
