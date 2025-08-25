@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid || auth.token.username === 'H08_09'",
+        "tasks": {
+          ".read": true,
+          ".write": "auth.uid === $uid"
+        }
+      }
+    },
+    "tasks": {
+      ".read": true,
+      ".write": "auth.token.username === 'H08_09'"
+    },
+    "leaderboard": {
+      ".read": true,
+      ".write": false
+    }
+  }
+}
