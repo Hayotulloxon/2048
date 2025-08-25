@@ -5,7 +5,7 @@ import Home from './pages/Home';
 import LeaderboardPage from './pages/LeaderboardPage';
 import TasksPage from './pages/TasksPage';
 import AdminPage from './pages/AdminPage';
-import { init as initTelegram } from '@telegram-apps/sdk';
+import { init as initTelegram } from '@telegram-apps/sdk-react';
 
 initTelegram();
 
