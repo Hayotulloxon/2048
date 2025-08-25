@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 Telegram WebApp</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .game-tile {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tile-2 { 
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            color: #2d3436;
+            font-weight: 900;
+            font-size: 1.2em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(253, 203, 110, 0.3);
+        }
+        .tile-4 { 
+            background: linear-gradient(135deg, #fab1a0, #e17055);
+            color: white;
+            font-weight: 900;
+            font-size: 1.2em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(225, 112, 85, 0.3);
+        }
+        .tile-8 { 
+            background: linear-gradient(135deg, #fd79a8, #e84393);
+            color: white;
+            font-weight: 900;
+            font-size: 1.2em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(232, 67, 147, 0.3);
+        }
+        .tile-16 { 
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white;
+            font-weight: 900;
+            font-size: 1.1em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(108, 92, 231, 0.3);
+        }
+        .tile-32 { 
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            font-weight: 900;
+            font-size: 1.1em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(9, 132, 227, 0.3);
+        }
+        .tile-64 { 
+            background: linear-gradient(135deg, #55efc4, #00b894);
+            color: white;
+            font-weight: 900;
+            font-size: 1.1em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 184, 148, 0.3);
+        }
+        .tile-128 { 
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+            color: white;
+            font-weight: 900;
+            font-size: 1em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 8px 32px rgba(225, 112, 85, 0.4);
+        }
+        .tile-256 { 
+            background: linear-gradient(135deg, #fd79a8, #fdcb6e);
+            color: white;
+            font-weight: 900;
+            font-size: 1em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 8px 32px rgba(253, 121, 168, 0.4);
+        }
+        .tile-512 { 
+            background: linear-gradient(135deg, #a29bfe, #fd79a8);
+            color: white;
+            font-weight: 900;
+            font-size: 1em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 8px 32px rgba(162, 155, 254, 0.4);
+        }
+        .tile-1024 { 
+            background: linear-gradient(135deg, #74b9ff, #a29bfe);
+            color: white;
+            font-weight: 900;
+            font-size: 0.9em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 8px 32px rgba(116, 185, 255, 0.4);
+        }
+        .tile-2048 { 
+            background: linear-gradient(135deg, #ffeaa7, #55efc4, #74b9ff);
+            color: white;
+            font-weight: 900;
+            font-size: 0.9em;
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 12px 40px rgba(255, 234, 167, 0.5);
+            animation: rainbow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes rainbow {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.05) rotate(2deg); }
+        }
+        
+        .slide-animation {
+            /* Animation removed for better visibility */
+        }
+        
+        .coin-animation {
+            animation: coinBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        @keyframes coinBounce {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3) rotate(10deg); }
+            100% { transform: scale(1); }
+        }
+        
+        .nav-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .nav-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+        
+        .floating-card {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        .pulse-effect {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container mx-auto px-4 py-6 max-w-md">
+        <!-- Header -->
+        <div class="glass-effect rounded-3xl shadow-2xl p-6 mb-6 floating-card">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-14 h-14 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                        <span id="userInitial">U</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-xl text-white" id="username">Foydalanuvchi</h1>
+                        <p class="text-sm text-purple-200">Reyting: <span id="userRank" class="font-semibold">#1</span></p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="flex items-center space-x-2 text-yellow-300 mb-1">
+                        <span class="text-2xl">💰</span>
+                        <span class="font-bold text-2xl" id="coinBalance">0</span>
+                    </div>
+                    <p class="text-xs text-purple-200">Eng yuqori: <span id="bestScore" class="font-semibold">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="glass-effect rounded-3xl shadow-2xl mb-6 p-2">
+            <div class="flex space-x-1">
+                <button class="nav-btn flex-1 py-4 px-3 text-center font-semibold rounded-2xl text-white active" data-tab="game">
+                    <div class="text-2xl mb-1">🎮</div>
+                    <div class="text-xs">O'yin</div>
+                </button>
+                <button class="nav-btn flex-1 py-4 px-3 text-center font-semibold rounded-2xl text-purple-200" data-tab="tasks">
+                    <div class="text-2xl mb-1">📋</div>
+                    <div class="text-xs">Vazifalar</div>
+                </button>
+                <button class="nav-btn flex-1 py-4 px-3 text-center font-semibold rounded-2xl text-purple-200" data-tab="leaderboard">
+                    <div class="text-2xl mb-1">🏆</div>
+                    <div class="text-xs">Reyting</div>
+                </button>
+                <button class="nav-btn flex-1 py-4 px-3 text-center font-semibold rounded-2xl text-purple-200" data-tab="shop">
+                    <div class="text-2xl mb-1">🛒</div>
+                    <div class="text-xs">Do'kon</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Tab -->
+        <div id="gameTab" class="tab-content">
+            <div class="glass-effect rounded-3xl shadow-2xl p-6 mb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="text-center">
+                        <p class="text-sm text-purple-200 mb-1">Hozirgi ball</p>
+                        <p class="text-3xl font-bold gradient-text" id="currentScore">0</p>
+                    </div>
+                    <button id="newGameBtn" class="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg transform hover:scale-105 transition-all duration-300 pulse-effect">
+                        ✨ Yangi o'yin
+                    </button>
+                </div>
+                
+                <div id="gameBoard" class="grid grid-cols-4 gap-3 bg-gradient-to-br from-purple-900/30 to-blue-900/30 p-4 rounded-2xl backdrop-blur-sm">
+                    <!-- Game tiles will be generated here -->
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-purple-200 mb-2">🎯 Harakatlantirish uchun suring</p>
+                    <div class="flex justify-center space-x-2">
+                        <span class="text-xs bg-white/20 px-3 py-1 rounded-full text-purple-200">⬅️ Chap</span>
+                        <span class="text-xs bg-white/20 px-3 py-1 rounded-full text-purple-200">➡️ O'ng</span>
+                        <span class="text-xs bg-white/20 px-3 py-1 rounded-full text-purple-200">⬆️ Yuqori</span>
+                        <span class="text-xs bg-white/20 px-3 py-1 rounded-full text-purple-200">⬇️ Past</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Tab -->
+        <div id="tasksTab" class="tab-content hidden">
+            <div class="space-y-4">
+                <!-- Daily Tasks -->
+                <div class="glass-effect rounded-3xl shadow-2xl p-6">
+                    <h3 class="font-bold text-xl mb-4 text-white flex items-center">
+                        📅 Kunlik vazifalar
+                    </h3>
+                    <div class="space-y-3" id="dailyTasks">
+                        <!-- Tasks will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Social Tasks -->
+                <div class="glass-effect rounded-3xl shadow-2xl p-6">
+                    <h3 class="font-bold text-xl mb-4 text-white flex items-center">
+                        👥 Ijtimoiy vazifalar
+                    </h3>
+                    <div class="space-y-3" id="socialTasks">
+                        <!-- Tasks will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Referral -->
+                <div class="glass-effect rounded-3xl shadow-2xl p-6">
+                    <h3 class="font-bold text-xl mb-4 text-white flex items-center">
+                        🤝 Do'stlarni taklif qiling
+                    </h3>
+                    <p class="text-sm text-purple-200 mb-4">Har bir do'st uchun 1000 tanga oling! 💰</p>
+                    <div class="flex space-x-3 mb-3">
+                        <input type="text" id="referralLink" class="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-sm text-white placeholder-purple-200" readonly>
+                        <button id="copyReferralBtn" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-2xl text-sm font-semibold shadow-lg hover:scale-105 transition-all duration-300">
+                            📋 Nusxalash
+                        </button>
+                    </div>
+                    <p class="text-xs text-purple-200">Taklif qilinganlar: <span id="referralCount" class="font-semibold text-yellow-300">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Tab -->
+        <div id="leaderboardTab" class="tab-content hidden">
+            <div class="glass-effect rounded-3xl shadow-2xl p-6">
+                <h3 class="font-bold text-xl mb-6 text-center text-white">🏆 Global Reyting</h3>
+                <div class="space-y-3" id="leaderboardList">
+                    <!-- Leaderboard will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Shop Tab -->
+        <div id="shopTab" class="tab-content hidden">
+            <div class="space-y-4">
+                <div class="glass-effect rounded-3xl shadow-2xl p-6">
+                    <h3 class="font-bold text-xl mb-6 text-white">🛒 Kuchaytirishlar</h3>
+                    <div class="space-y-4">
+                        <div class="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-4 rounded-2xl border border-yellow-500/30">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-semibold text-white">⚡ Katta son ehtimoli</h4>
+                                    <p class="text-sm text-purple-200">Katta sonlar chiqish ehtimolini oshiradi</p>
+                                </div>
+                                <button class="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg hover:scale-105 transition-all duration-300" onclick="buyUpgrade('bigNumber', 500)">
+                                    500 💰
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-purple-500/20 to-pink-500/20 p-4 rounded-2xl border border-purple-500/30">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-semibold text-white">🚀 Minimal son o'zgartirish</h4>
+                                    <p class="text-sm text-purple-200">Eng kichik son 2 o'rniga 4 chiqadi</p>
+                                </div>
+                                <button class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg hover:scale-105 transition-all duration-300" onclick="buyUpgrade('minNumber', 1000)">
+                                    1000 💰
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel (Hidden by default) -->
+        <div id="adminPanel" class="hidden">
+            <div class="glass-effect rounded-3xl shadow-2xl p-6 mb-6 border border-red-500/30">
+                <h3 class="font-bold text-xl mb-6 text-red-300">⚙️ Admin Panel</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-3 text-white">Yangi vazifa qo'shish</label>
+                        <div class="space-y-3">
+                            <input type="text" id="taskTitle" placeholder="Vazifa nomi" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-purple-200">
+                            <input type="number" id="taskReward" placeholder="Mukofot (tangalar)" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-purple-200">
+                            <select id="taskType" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white">
+                                <option value="daily">Kunlik</option>
+                                <option value="social">Ijtimoiy</option>
+                                <option value="code">Kod</option>
+                                <option value="referral">Referal</option>
+                            </select>
+                            <button onclick="addTask()" class="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-3 rounded-2xl font-semibold shadow-lg hover:scale-105 transition-all duration-300">
+                                ➕ Vazifa qo'shish
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Telegram WebApp initialization
+        let tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        // Game state
+        let gameState = {
+            board: Array(4).fill().map(() => Array(4).fill(0)),
+            score: 0,
+            coins: parseInt(localStorage.getItem('coins') || '0'),
+            bestScore: parseInt(localStorage.getItem('bestScore') || '0'),
+            upgrades: JSON.parse(localStorage.getItem('upgrades') || '{}'),
+            username: tg?.initDataUnsafe?.user?.username || 'Player',
+            userId: tg?.initDataUnsafe?.user?.id || Math.random().toString(36).substr(2, 9)
+        };
+
+        // Initialize user
+        function initUser() {
+            const username = gameState.username;
+            document.getElementById('username').textContent = username;
+            document.getElementById('userInitial').textContent = username.charAt(0).toUpperCase();
+            document.getElementById('coinBalance').textContent = gameState.coins;
+            document.getElementById('bestScore').textContent = gameState.bestScore;
+            
+            // Generate referral link
+            const referralLink = `https://t.me/your_bot?start=${gameState.userId}`;
+            document.getElementById('referralLink').value = referralLink;
+            
+            // Check if admin
+            if (username === 'H08_09') {
+                document.getElementById('adminPanel').classList.remove('hidden');
+            }
+        }
+
+        // Game logic
+        function initGame() {
+            gameState.board = Array(4).fill().map(() => Array(4).fill(0));
+            gameState.score = 0;
+            addRandomTile();
+            addRandomTile();
+            updateDisplay();
+        }
+
+        function addRandomTile() {
+            const emptyCells = [];
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    if (gameState.board[i][j] === 0) {
+                        emptyCells.push({x: i, y: j});
+                    }
+                }
+            }
+            
+            if (emptyCells.length > 0) {
+                const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                const minValue = gameState.upgrades.minNumber ? 4 : 2;
+                const maxChance = gameState.upgrades.bigNumber ? 0.3 : 0.1;
+                gameState.board[randomCell.x][randomCell.y] = Math.random() < maxChance ? minValue * 2 : minValue;
+            }
+        }
+
+        function updateDisplay() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+            
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'game-tile w-16 h-16 flex items-center justify-center font-bold text-lg';
+                    
+                    const value = gameState.board[i][j];
+                    if (value > 0) {
+                        tile.textContent = value;
+                        tile.classList.add(`tile-${value}`);
+                    } else {
+                        tile.classList.add('bg-white/10', 'border', 'border-white/20');
+                    }
+                    
+                    board.appendChild(tile);
+                }
+            }
+            
+            document.getElementById('currentScore').textContent = gameState.score;
+            document.getElementById('coinBalance').textContent = gameState.coins;
+        }
+
+        function move(direction) {
+            let moved = false;
+            const newBoard = gameState.board.map(row => [...row]);
+            
+            if (direction === 'left') {
+                for (let i = 0; i < 4; i++) {
+                    const row = newBoard[i].filter(val => val !== 0);
+                    for (let j = 0; j < row.length - 1; j++) {
+                        if (row[j] === row[j + 1]) {
+                            row[j] *= 2;
+                            gameState.score += row[j];
+                            gameState.coins += Math.floor(row[j] / 10);
+                            row.splice(j + 1, 1);
+                        }
+                    }
+                    while (row.length < 4) row.push(0);
+                    if (JSON.stringify(row) !== JSON.stringify(gameState.board[i])) moved = true;
+                    newBoard[i] = row;
+                }
+            }
+            
+            if (direction === 'right') {
+                for (let i = 0; i < 4; i++) {
+                    const row = newBoard[i].filter(val => val !== 0).reverse();
+                    for (let j = 0; j < row.length - 1; j++) {
+                        if (row[j] === row[j + 1]) {
+                            row[j] *= 2;
+                            gameState.score += row[j];
+                            gameState.coins += Math.floor(row[j] / 10);
+                            row.splice(j + 1, 1);
+                        }
+                    }
+                    while (row.length < 4) row.push(0);
+                    row.reverse();
+                    if (JSON.stringify(row) !== JSON.stringify(gameState.board[i])) moved = true;
+                    newBoard[i] = row;
+                }
+            }
+            
+            if (direction === 'up') {
+                for (let j = 0; j < 4; j++) {
+                    const column = [];
+                    for (let i = 0; i < 4; i++) {
+                        if (newBoard[i][j] !== 0) column.push(newBoard[i][j]);
+                    }
+                    for (let i = 0; i < column.length - 1; i++) {
+                        if (column[i] === column[i + 1]) {
+                            column[i] *= 2;
+                            gameState.score += column[i];
+                            gameState.coins += Math.floor(column[i] / 10);
+                            column.splice(i + 1, 1);
+                        }
+                    }
+                    while (column.length < 4) column.push(0);
+                    for (let i = 0; i < 4; i++) {
+                        if (newBoard[i][j] !== column[i]) moved = true;
+                        newBoard[i][j] = column[i];
+                    }
+                }
+            }
+            
+            if (direction === 'down') {
+                for (let j = 0; j < 4; j++) {
+                    const column = [];
+                    for (let i = 3; i >= 0; i--) {
+                        if (newBoard[i][j] !== 0) column.push(newBoard[i][j]);
+                    }
+                    for (let i = 0; i < column.length - 1; i++) {
+                        if (column[i] === column[i + 1]) {
+                            column[i] *= 2;
+                            gameState.score += column[i];
+                            gameState.coins += Math.floor(column[i] / 10);
+                            column.splice(i + 1, 1);
+                        }
+                    }
+                    while (column.length < 4) column.push(0);
+                    for (let i = 0; i < 4; i++) {
+                        if (newBoard[3-i][j] !== column[i]) moved = true;
+                        newBoard[3-i][j] = column[i];
+                    }
+                }
+            }
+            
+            if (moved) {
+                gameState.board = newBoard;
+                addRandomTile();
+                updateDisplay();
+                saveGame();
+                
+                // Animate coins
+                document.getElementById('coinBalance').classList.add('coin-animation');
+                setTimeout(() => {
+                    document.getElementById('coinBalance').classList.remove('coin-animation');
+                }, 600);
+            }
+        }
+
+        function saveGame() {
+            localStorage.setItem('coins', gameState.coins.toString());
+            if (gameState.score > gameState.bestScore) {
+                gameState.bestScore = gameState.score;
+                localStorage.setItem('bestScore', gameState.bestScore.toString());
+                document.getElementById('bestScore').textContent = gameState.bestScore;
+            }
+            localStorage.setItem('upgrades', JSON.stringify(gameState.upgrades));
+        }
+
+        // Navigation
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('text-purple-200');
+            });
+            
+            document.getElementById(tabName + 'Tab').classList.remove('hidden');
+            const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+            activeBtn.classList.add('active');
+            activeBtn.classList.remove('text-purple-200');
+            
+            if (tabName === 'tasks') loadTasks();
+            if (tabName === 'leaderboard') loadLeaderboard();
+        }
+
+        // Tasks
+        function loadTasks() {
+            const dailyTasks = [
+                {title: "5 o'yin o'ynang", reward: 100, completed: false},
+                {title: "1000 ball to'plang", reward: 200, completed: false},
+                {title: "128 raqamiga yeting", reward: 300, completed: false}
+            ];
+            
+            const socialTasks = [
+                {title: "Telegram kanalga obuna bo'ling", reward: 500, completed: false},
+                {title: "YouTube kanalga obuna bo'ling", reward: 500, completed: false},
+                {title: "Do'stingizni taklif qiling", reward: 1000, completed: false}
+            ];
+            
+            renderTasks('dailyTasks', dailyTasks);
+            renderTasks('socialTasks', socialTasks);
+        }
+
+        function renderTasks(containerId, tasks) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = tasks.map(task => `
+                <div class="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20 ${task.completed ? 'bg-green-500/20 border-green-500/30' : ''}">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-semibold text-white">${task.title}</h4>
+                            <p class="text-sm text-purple-200">${task.reward} tanga 💰</p>
+                        </div>
+                        <button class="px-4 py-2 rounded-xl text-sm font-semibold shadow-lg transition-all duration-300 ${task.completed ? 'bg-green-500 text-white' : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:scale-105'}" 
+                                onclick="completeTask('${task.title}', ${task.reward})" 
+                                ${task.completed ? 'disabled' : ''}>
+                            ${task.completed ? '✅ Bajarildi' : '🎯 Bajarish'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function completeTask(title, reward) {
+            gameState.coins += reward;
+            updateDisplay();
+            saveGame();
+            loadTasks();
+            
+            // Show success message
+            alert(`🎉 Vazifa bajarildi! ${reward} tanga olindi.`);
+        }
+
+        // Leaderboard
+        function loadLeaderboard() {
+            const leaderboard = [
+                {name: gameState.username, score: gameState.bestScore, coins: gameState.coins, rank: 1},
+                {name: "Player2", score: 15420, coins: 2500, rank: 2},
+                {name: "Player3", score: 12800, coins: 2100, rank: 3},
+                {name: "Player4", score: 9600, coins: 1800, rank: 4},
+                {name: "Player5", score: 7200, coins: 1500, rank: 5}
+            ].sort((a, b) => b.coins - a.coins);
+            
+            document.getElementById('leaderboardList').innerHTML = leaderboard.map((player, index) => `
+                <div class="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20 ${player.name === gameState.username ? 'bg-blue-500/20 border-blue-500/30 glow-effect' : ''}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <span class="font-bold text-2xl ${index < 3 ? 'text-yellow-400' : 'text-purple-300'}">#${index + 1}</span>
+                            <div>
+                                <h4 class="font-semibold text-white">${player.name}</h4>
+                                <p class="text-sm text-purple-200">Ball: ${player.score}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-yellow-300 text-lg">${player.coins} 💰</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Shop
+        function buyUpgrade(type, cost) {
+            if (gameState.coins >= cost) {
+                gameState.coins -= cost;
+                gameState.upgrades[type] = true;
+                updateDisplay();
+                saveGame();
+                alert('🎉 Kuchaytirish sotib olindi!');
+            } else {
+                alert('❌ Yetarli tanga yo\'q!');
+            }
+        }
+
+        // Admin functions
+        function addTask() {
+            const title = document.getElementById('taskTitle').value;
+            const reward = document.getElementById('taskReward').value;
+            const type = document.getElementById('taskType').value;
+            
+            if (title && reward) {
+                alert(`✅ Yangi vazifa qo'shildi: ${title} (${reward} tanga)`);
+                document.getElementById('taskTitle').value = '';
+                document.getElementById('taskReward').value = '';
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initUser();
+            initGame();
+            
+            // Navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+            });
+            
+            // New game button
+            document.getElementById('newGameBtn').addEventListener('click', initGame);
+            
+            // Copy referral link
+            document.getElementById('copyReferralBtn').addEventListener('click', function() {
+                const link = document.getElementById('referralLink');
+                link.select();
+                document.execCommand('copy');
+                alert('📋 Havola nusxalandi!');
+            });
+            
+            // Touch controls for game
+            let startX, startY;
+            const gameBoard = document.getElementById('gameBoard');
+            
+            gameBoard.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            }, {passive: false});
+            
+            gameBoard.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+            }, {passive: false});
+            
+            gameBoard.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                if (!startX || !startY) return;
+                
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                
+                const diffX = startX - endX;
+                const diffY = startY - endY;
+                
+                const minSwipeDistance = 30;
+                
+                if (Math.abs(diffX) > minSwipeDistance || Math.abs(diffY) > minSwipeDistance) {
+                    if (Math.abs(diffX) > Math.abs(diffY)) {
+                        if (diffX > 0) move('left');
+                        else move('right');
+                    } else {
+                        if (diffY > 0) move('up');
+                        else move('down');
+                    }
+                }
+                
+                startX = null;
+                startY = null;
+            }, {passive: false});
+            
+            // Keyboard controls
+            document.addEventListener('keydown', function(e) {
+                switch(e.key) {
+                    case 'ArrowLeft': move('left'); break;
+                    case 'ArrowRight': move('right'); break;
+                    case 'ArrowUp': move('up'); break;
+                    case 'ArrowDown': move('down'); break;
+                }
+            });
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9748ea3fa2255318',t:'MTc1NjEwMjEwOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
