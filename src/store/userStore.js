@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { getDatabase, ref, get, update } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
+import { getDatabase, ref, get, update } from 'firebase/database';
 
 export const useUserStore = create((set) => ({
   user: null,
@@ -14,7 +14,7 @@ export const useUserStore = create((set) => ({
       const userRef = ref(db, `users/${auth.currentUser.uid}`);
       const snapshot = await get(userRef);
       const data = snapshot.val() || { coins: 0, maxTile: 0, tasks: [] };
-      set({ user: auth.currentUser, coins: data.coins, maxTile: data.maxTile, tasks: data.tasks || [] });
+      set({ user: { ...auth.currentUser, ...data }, coins: data.coins, maxTile: data.maxTile, tasks: data.tasks || [] });
     }
   },
   syncProgress: async (coinsDelta, maxTile) => {
@@ -22,9 +22,10 @@ export const useUserStore = create((set) => ({
     const db = getDatabase();
     if (auth.currentUser) {
       const userRef = ref(db, `users/${auth.currentUser.uid}`);
+      const currentData = (await get(userRef)).val();
       await update(userRef, {
-        coins: (await get(userRef)).val()?.coins + coinsDelta || coinsDelta,
-        maxTile: Math.max((await get(userRef)).val()?.maxTile || 0, maxTile),
+        coins: (currentData?.coins || 0) + coinsDelta,
+        maxTile: Math.max(currentData?.maxTile || 0, maxTile),
       });
       set((state) => ({
         coins: state.coins + coinsDelta,
