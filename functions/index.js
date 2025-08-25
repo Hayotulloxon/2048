@@ -2,7 +2,6 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
 const { Telegraf } = require('telegraf');
-const { google } = require('googleapis');
 
 admin.initializeApp();
 const db = admin.database();
@@ -46,7 +45,7 @@ exports.completeTask = functions.https.onCall(async (data, context) => {
     completed = ['member', 'administrator', 'creator'].includes(member.status);
   } else if (task.type === 'subscription_youtube') {
     // Placeholder: YouTube OAuth token required
-    completed = false; // Implement OAuth flow separately
+    completed = false;
   } else if (task.type === 'referral') {
     completed = true;
   }
