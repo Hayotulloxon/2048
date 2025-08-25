@@ -4,4 +4,4 @@ node_modules/
 .firebaserc
 *.log
 .DS_Store
-cp .env.example .env
+build/
