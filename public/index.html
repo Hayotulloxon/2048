@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -49,36 +10,32 @@
 <body>
   <div id="root"></div>
   <script type="module">
-    // Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
-    import { getAuth, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-    import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-analytics.js";
+    import { getAuth, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-functions.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBYrMBCCnb1XiTM8EHn9u-vw7ACHAdvlaQ",
-      authDomain: "project-3020568111544941346.firebaseapp.com",
-      databaseURL: "https://project-3020568111544941346-default-rtdb.firebaseio.com",
-      projectId: "project-3020568111544941346",
-      storageBucket: "project-3020568111544941346.firebasestorage.app",
-      messagingSenderId: "863166821030",
-      appId: "1:863166821030:web:c222bcb42da96f3de1ba67",
-      measurementId: "G-ZCNRBT9680"
+      apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+      authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+      databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL,
+      projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.REACT_APP_FIREBASE_APP_ID,
+      measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
     const auth = getAuth(app);
     const db = getDatabase(app);
     const functions = getFunctions(app);
 
-    // Telegram WebApp
     const Telegram = window.Telegram.WebApp;
     Telegram.ready();
 
-    // Authenticate with Telegram initData
     async function authenticate() {
       const initData = Telegram.initData;
       const validateAuth = httpsCallable(functions, 'validateTelegramAuth');
@@ -93,7 +50,6 @@
       }
     }
 
-    // Load React app after auth
     import { createRoot } from 'https://esm.sh/react-dom@18';
     import App from '/src/App.jsx';
     authenticate().then(() => {
